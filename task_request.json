@@ -1,0 +1,30 @@
+{
+  "params": {
+    "dates": [{
+      "endDate": "10-31-2022",
+      "recurring": false,
+      "startDate": "10-01-2022"//,
+      //"yearRange": [2023, 2023]
+    }],
+    "layers": [{
+      "layer": "SDS_LST",
+      "product": "ECO2LSTE.001"
+    }, {
+      "layer": "SDS_LST_err",
+      "product": "ECO2LSTE.001"
+    }],
+    "output": {
+      "format": {
+        "type": "netcdf4"
+      }
+    },
+    "coordinates": [{
+      "id": "Chicago",
+      "category": "trial1",
+      "latitude": 41.881832,
+      "longitude": -87.623177
+    }]
+  },
+  "task_name": "API Test",
+  "task_type": "point"
+}
