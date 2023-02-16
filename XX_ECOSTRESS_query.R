@@ -7,40 +7,6 @@ library(httr)
 library(jsonlite)
 library(readxl)
 
-# using template script from pgasana@anl.gov from the Census API query.
-# tryCatch({
-#   # COUNTY LEVEL PER CAPITA INCOME
-#   asc_json <- fromJSON(
-#     txt = "https://api.census.gov/data/2019/acs/acs5?get=group(B19301)&for=county"
-#   )
-#   
-#   asc_percapita_df <- setNames(
-#     data.frame(asc_json[2:nrow(asc_json),]), 
-#     as.vector(asc_json[1,])
-#   )
-#   
-#   asc_percapita_df <- within(
-#     asc_percapita_df[c("GEO_ID", "NAME", "state", "county", "B19301_001E", "B19301_001M")], 
-#     {
-#       B19301_001E <- as.integer(B19301_001E)
-#       B19301_001M <- as.integer(B19301_001M)
-#       acs_pci_usa <- as.numeric(asc_national_percapita_vec["B19301_001E"])
-#       type <- as.factor("acs")
-#       threshold_80_pct_nat_indicator <- ifelse(
-#         B19301_001E >= 0.8*as.numeric(asc_national_percapita_vec["B19301_001E"]), 
-#         "above",
-#         "below"
-#       )
-#       threshold_80_pct_nat_value <- 0.8*as.numeric(asc_national_percapita_vec["B19301_001E"])
-#       GeoFips <- paste0(state, county)
-#     }
-#   )
-#   
-#   rm(asc_json, asc_national_percapita_vec)
-# }, warning = function(w) w
-# , error = function(e) e
-# )
-
 ####################################
 # ECOSTRESS Data----
 
