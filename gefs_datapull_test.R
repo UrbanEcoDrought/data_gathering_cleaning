@@ -7,7 +7,7 @@ gdalcubes_options(parallel=T) #optional
 dir.create("meow")
 # gefs_to_parquet(Sys.Date(), c(mean = "geavg", spr = "gespr"), "todays_forecast")
 
-# This is downloading the 0.5degree data by default.
+# This is downloading the 0.5degree data by default..
 # Will want to see if we can get the 0.25 degree data
 # may require tweaking some of the functions that the 'gefs_to_parquet' function below relies upon
 
