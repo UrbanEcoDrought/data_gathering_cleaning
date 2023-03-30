@@ -40,5 +40,8 @@ write.csv(mort.dat.stack, "processed_data/spi_IL_div02.csv", row.names=F)
 # Can calc spi and spei data from the SPEI package by NCAR
 # needs a water balance dataset for the point or grid (precipitation - potential evapotranspiration)
 # the package has functions for calculatin PET, but we'd need to give it the raw data inputs.
+
+# documentation can be found here: https://cran.r-project.org/web/packages/SPEI/SPEI.pdf
+
 library(SPEI)
 
