@@ -98,6 +98,8 @@ vpd.dat2.short <- vpd.dat2[,c("date", "vpd.index.value")]
 
 dat <- merge(dat,vpd.dat2.short)
 head(dat)
+
+write.csv(dat, "processed_data/Morton_Drought_Datasets - Morton_Drought_Datasets_mra.csv", row.names=F)
 #######################
 # Monthly Average Calcs----
 # making monthly averages of each index and identifying a 'normal' as the interquartile range
@@ -147,3 +149,4 @@ dev.off()
 
 # saving the stacked dataframe for others to use
 write.csv(dat.month, file = "processed_data/morton_stacked_drought_indices.csv", row.names=F)
+
