@@ -11,7 +11,7 @@ head(meta.data)
 
 # listing out all fo the files in the directory
 group.files <- list.files(data.path)
-
+group.files <- group.files[!group.files %in% "morton_dendrometer_cleaned.csv"]
 
 
 
@@ -64,18 +64,28 @@ mort.dendro.dat$date <- lubridate::date(mort.dendro.dat$date.time)
 # matching id.num with plot ID to look at different species
 head(meta.data)
 meta.data$`Serial#` <- as.factor(meta.data$`Serial#`)
+# making starting DBH a character for now
+meta.data$`DBH (cm) at installation` <- as.character(meta.data$`DBH (cm) at installation`)
 
 mort.dendro.dat$plotID <- meta.data$Plot[match(mort.dendro.dat$id.num, meta.data$`Serial#`)]
 mort.dendro.dat$spp <- meta.data$Species[match(mort.dendro.dat$id.num, meta.data$`Serial#`)]
 
-head(mort.dendro.dat)
+
+# have an issue where sensor ID 92210128 being uninstalled and re-installed, giving it 2 starting DBH's
+# going to pull this sensor from the data set as we have others
+
+mort.dendro.dat2 <- mort.dendro.dat[!mort.dendro.dat$id.num %in% "92210128",] 
+
+# pulling in the starting dbh
+mort.dendro.dat2$start.dbh.cm <- meta.data$`DBH (cm) at installation`[match(mort.dendro.dat2$id.num, meta.data$`Serial#`)]
+head(mort.dendro.dat2)
 
 # saving dendrometer band data.
-saveRDS(mort.dendro.dat, file = "processed_data/morton_dendrometer_cleaned.rds")
-write.csv(mort.dendro.dat, file.path(data.path, "morton_dendrometer_cleaned.csv"), row.names=F)
+saveRDS(mort.dendro.dat2, file = "processed_data/morton_dendrometer_cleaned.rds")
+write.csv(mort.dendro.dat2, file.path(data.path, "morton_dendrometer_cleaned.csv"), row.names=F)
 
 
 library(ggplot2)
-ggplot(data=mort.dendro.dat[mort.dendro.dat$id.num=="92202021",]) +
+ggplot(data=mort.dendro.dat[mort.dendro.dat$id.num=="92210128",]) +
   geom_line(aes(x=date.time, y=t1)) +
   scale_x_datetime(date_labels="%b-%Y", date_breaks="3 month")
