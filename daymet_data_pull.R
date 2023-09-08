@@ -11,7 +11,7 @@ temp.daymet <- download_daymet(
   lat = lat,
   lon = lon,
   start= 2021,
-  end = 2022
+  end = 2023
 )
 
 str(temp.daymet)
