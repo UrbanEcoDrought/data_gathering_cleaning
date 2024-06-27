@@ -14,7 +14,7 @@ GoogleFolderSave <- "landsat_data"
 ##################### 
 # 0. Read in helper functions ----
 ##################### 
-source("../UrbanDrought_SpatialAnalysis_Chicago/Workflow_NDVI_Landsat_by_Landcover/00_EarthEngine_HelperFunctions.R")
+source("../UrbanDrought_SpatialAnalysis_chiBBox/Workflow_NDVI_Landsat_by_Landcover/00_EarthEngine_HelperFunctions.R")
 ##################### 
 
 
@@ -108,8 +108,8 @@ saveTest$start()
 # "LANDSAT/LC09/C02/T1_L2"
 # Load MODIS NDVI data; attach month & year
 # https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC09_C02_T1_L2
-landsat9 <- ee$ImageCollection("LANDSAT/LC09/C02/T1_L2")$filterBounds(Chicago)$map(function(image){
-  return(image$clip(Chicago))
+landsat9 <- ee$ImageCollection("LANDSAT/LC09/C02/T1_L2")$filterBounds(chiBBox)$map(function(image){
+  return(image$clip(chiBBox))
 })$map(function(img){
   d= ee$Date(img$get('system:time_start'));
   dy= d$get('day');    
@@ -156,7 +156,7 @@ dates_list <- dates_features$aggregate_array("date")$getInfo()
 print(dates_list)
 
 
-l9NDVI2 <- ee$ImageCollection$toBands(l8NDVI)$rename(dates_list)
+l9NDVI2 <- ee$ImageCollection$toBands(l9NDVI)$rename(dates_list)
 ee_print(l9NDVI2)
 
 # Map$addLayer(l8NDVI2$select('2022-05-08'), ndviVis, 'NDVI')
@@ -174,8 +174,8 @@ saveTest$start()
 # ""LANDSAT/LE07/C02/T1_L2""
 # Load MODIS NDVI data; attach month & year
 # https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LE07_C02_T1_L2
-landsat7 <- ee$ImageCollection("LANDSAT/LE07/C02/T1_L2")$filterBounds(Chicago)$filterDate("2001-01-01", "2022-12-31")$map(function(image){
-  return(image$clip(Chicago))
+landsat7 <- ee$ImageCollection("LANDSAT/LE07/C02/T1_L2")$filterBounds(chiBBox)$filterDate("2001-01-01", "2022-12-31")$map(function(image){
+  return(image$clip(chiBBox))
 })$map(function(img){
   d= ee$Date(img$get('system:time_start'));
   dy= d$get('day');    
@@ -240,8 +240,8 @@ saveTest$start()
 # "LANDSAT_LT05_C02_T1_L2"
 # Load MODIS NDVI data; attach month & year
 # https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LT05_C02_T1_L2
-landsat5 <- ee$ImageCollection("LANDSAT/LT05/C02/T1_L2")$filterBounds(Chicago)$filterDate("2001-01-01", "2022-12-31")$map(function(image){
-  return(image$clip(Chicago))
+landsat5 <- ee$ImageCollection("LANDSAT/LT05/C02/T1_L2")$filterBounds(chiBBox)$filterDate("2001-01-01", "2022-12-31")$map(function(image){
+  return(image$clip(chiBBox))
 })$map(function(img){
   d= ee$Date(img$get('system:time_start'));
   dy= d$get('day');    
