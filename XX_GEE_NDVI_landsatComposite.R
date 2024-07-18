@@ -53,59 +53,65 @@ unique(landsat.df$landsat)
 
 landsat.df$year <- lubridate::year(landsat.df$date)
 landsat.df$month <- lubridate::month(landsat.df$date)
+landsat.df$doy <- lubridate::yday(landsat.df$date)
 
-ggplot(data=landsat.df[landsat.df$year=="2020" & landsat.df$month=="6",]) + facet_wrap(~date) +
+ggplot(data=landsat.df[landsat.df$year=="2020" & landsat.df$month=="6",]) + facet_grid(date~landsat) +
   geom_tile(aes(x=x, y=y, fill=ndvi_value)) +
   theme_bw()
   
+ggplot(data=landsat.df[landsat.df$landsat=="landsat8",]) +
+  geom_point(aes(x=doy, y=ndvi_value, col=landsat), alpha = 0.1) +
+  stat_smooth(aes(x=doy, y=ndvi_value, col=landsat), method="gam",
+              formula = y~s(x, bs="cs"))+
+  theme_minimal()
 
-################
-# loading in NLCD to merge in the land cover classes together.
 
-lc.dat <- rast(file.path("input_data/nlcd_2021_land_cover_l48_20230630.img"))
-plot(lc.dat)
+# want to add in the lagged time series just like we do with the regional means
+# see if we can keep it unique to individual satellites
 
-target_crs <- crs(temp.dat.reproj)
-target_res <- res(temp.dat.reproj)
-target_extent <- terra::ext(temp.dat.reproj)
+# creating a variable for x.y combo
+landsat.df$xy.coord <- paste(landsat.df$x, landsat.df$y, sep="[.]")
 
-head(lc.dat)
+landsat.df2 <- NULL
 
-lc.dat.reproj <- project(lc.dat, target_crs)
+pb <- txtProgressBar(min=0, max=length(land), style=3)
+pb.ind=1
 
-# reading in NLCD data----
-nlcd.rast <- rast("input_data/landsat_data/NLCD-Chicago_AnnualDupe_2000-2024.tif")
-nlcd.rast
+for(s in unique(landsat.df$landsat)){
+  print(s)
+  sat.temp <- landsat.df[landsat.df$landsat==s,]
+  sat.temp <- sat.temp[order(sat.temp$date, decreasing = F),]
+  
+  
+  pb <- txtProgressBar(min=0, max=length(unique(sat.temp$xy.coord)), style=3)
+  pb.ind=1
+  for(xy in unique(sat.temp$xy.coord)){
+    coord.temp <- sat.temp[sat.temp$xy.coord==xy,]
+    coord.temp <- coord.temp[order(coord.temp$date, decreasing = F),]
+    
+    coord.temp$ndvi.lag14d <- NA
+    for(d in 1:nrow(coord.temp)){
+      
+      rowLag <- which(coord.temp$date>=(coord.temp$date[d]-14) & coord.temp$date<coord.temp$date[d])
+      
+      if(length(rowLag)<1) next
+      if(length(rowLag)==1) coord.temp$ndvi.lag14d[d] <- coord.temp$ndvi_value[rowLag]
+      if(length(rowLag)>1) coord.temp$ndvi.lag14d[d] <- mean(coord.temp$ndvi_value[rowLag], na.rm=T)
+      
+    }
+   sat.temp2 <- merge(sat.temp, coord.temp, all.x=T)
+   setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
+  }
+  if(is.null(landsat.df2)) landsat.df2 <- sat.temp2 else lansat.df2 <- rbind(landsat.df2, sat.temp2)
+}
 
-plot(nlcd.rast)
-head(nlcd.rast)
 
-# data are categorical. Need to come up wiht a crosswalk
-nlcdPalette = c(
-  '#5475A8', # Open Water (11)
-  # '#d1def8', # Ice/Snow (12)
-  '#dec5c5', # Developed, Open Space (21)
-  '#d99282', # Developed, Low Intensity (22)
-  '#eb0000', # Developed, Medium Intensity (23)
-  '#ab0000', # Developed High Intensity (24)
-  '#b3ac9f', # Barren Land (31)
-  '#68ab5f', # Deciduous Forest (41)
-  '#1c5f2c', # Evergreen Forest (42)
-  '#b5c58f', # Mixed Forest (43)
-  # '#af963c', # Dwarf Shrub/Scrub (51); Alaska Only
-  '#ccb879', # Shrub/Scrub (52)
-  '#dfdfc2', # Grassland/Herbaceous (71)
-  # '#d1d182', # Sedge/herbaceous (72); Alaska Only
-  # '#a3cc51', # lichens (73); Alaska Only
-  # '#82ba9e', # Moss (74); Alaska Only
-  '#dcd939', # Pasture/Hay (81)
-  '#ab6c28', # Cultivated Crops (82)
-  '#b8d9eb', # Woody Wetlands (90)
-  '#6c9fb8' # Emergent Herbaceous Wetlands (95)
-);
+
 
 # data are spotty. May want to take a couple of week average.
-saveRDS(landsat.df, file = "G:/Shared drives/Urban Ecological Drought/data/r_files/processed_files/landsat_NDVI_spatial.RDS")
-saveRDS(landsat.df, file = "processed_data/landsat_NDVI_spatial.RDS")
-write.csv(landsat.df, file = "G:/Shared drives/Urban Ecological Drought/data/r_files/processed_files/landsat_NDVI_spatial.csv", row.names=F)
+saveRDS(landsat.df2, file = "G:/Shared drives/Urban Ecological Drought/data/r_files/processed_files/landsat_NDVI_spatial.RDS")
+saveRDS(landsat.df2, file = "processed_data/landsat_NDVI_spatial.RDS")
+write.csv(landsat.df2, file = "G:/Shared drives/Urban Ecological Drought/data/r_files/processed_files/landsat_NDVI_spatial.csv", row.names=F)
+
+
 

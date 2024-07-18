@@ -1,6 +1,6 @@
 # saving spatial NDVI data for machine learning exercises
 
-library(rgee); library(raster); library(terra)
+library(rgee); library(raster); library(terra); library(sf); library(sp)
 ee_check() # For some reason, it's important to run this before initializing right now
 rgee::ee_Initialize(user = 'malexander@anl.gov', drive=T, project="nbs2023-malexander")
 path.google.CR <- "~/Google Drive/My Drive/UrbanEcoDrought/"
@@ -9,6 +9,24 @@ NDVIsave <- "UrbanEcoDrought_NDVI_LocalExtract"
 # GoogleFolderSave <- "UHI_Analysis_Output_Final_v2"
 assetHome <- ee_get_assethome()
 
+
+# loading in coarse climate raster to use as a grid template for aggregating GEE data
+coarseRaster <- rast("input_data/Sample_Tmax30day.tif")
+coarseRaster <- terra::project(coarseRaster, "EPSG:3857") # changing projection to get into a meters frame
+
+coarse_crs <- crs(coarseRaster)
+coarse_res <- res(coarseRaster)
+coarse_extent <- ext(coarseRaster)
+
+coarse_bbox <- st_as_sf(as_Spatial(coarse_extent))
+
+
+coarseProjection <- ee$Projection(coarse_crs)$atScale(mean(coarse_res))
+
+#################
+# hard coded bbox in EPSG:3857
+climBBox <- ee$Geometry$BBox(-88.5, 41.25, -87.5, 5236173.78392094)
+########################
 
 GoogleFolderSave <- "landsat_data"
 ##################### 
@@ -109,9 +127,12 @@ l8NDVI_reproj <- l8NDVI2$reproject(
 reducer <- ee$Reducer$mean()
 
 l8NDVI_agg <- l8NDVI_reproj$reduceResolution(
-  reducer = reducer,
+  reducer = reducer, maxPixels= 65535,
   bestEffort = TRUE
-)
+)$multiply(ee$Image$pixelArea())$
+  reproject({crs=target_projection})
+
+
 ee_print(l8NDVI_agg)
 
 saveTest <- ee_image_to_drive(image=l8NDVI_agg, description="landsat8_NDVI", fileNamePrefix="landsat8_NDVI", folder=GoogleFolderSave, timePrefix = F, region = chiBBox, maxPixels = 10e12, scale=5462.168, crs="EPSG:3857")
