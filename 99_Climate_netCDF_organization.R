@@ -8,8 +8,8 @@ library(sf)
 
 # loading in climate data----
 # Specifying Paths
-# google.drive <-  "G:/Shared drives/Urban Ecological Drought"
-google.drive <-  "~/Google Drive//Shared drives/Urban Ecological Drought"
+google.drive <-  "G:/Shared drives/Urban Ecological Drought"
+# google.drive <-  "~/Google Drive//Shared drives/Urban Ecological Drought"
 
 clim.path <- file.path(google.drive, "data/data_sets/Daily Meteorological Data")
 clim.files <- dir(clim.path)
@@ -67,7 +67,7 @@ for(i in clim.files.nc){
   
   tempRast <- rast(tempData[dim(tempData)[1]:1,,], crs=base_crs, extent=c(range(dimLon), range(dimLat)))
   # tempRast <- rast(aperm(tempData, c(1,2,3)), crs=base_crs, extent=c(range(dimLon), range(dimLat)))
-  plot(tempRast$lyr.2)
+  # plot(tempRast$lyr.2)
   
   temp.reproj <- project(tempRast, "EPSG:3857")
   tempDF <- terra::as.data.frame(temp.reproj, xy=T)
@@ -87,3 +87,8 @@ for(i in clim.files.nc){
   saveRDS(climateData, file="processed_data/climate_spatial.RDS")
   setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
 }
+
+# checking to make sure that things saved
+
+doubleCheck <- readRDS("processed_data/climate_spatial.RDS")
+head(doubleCheck)
