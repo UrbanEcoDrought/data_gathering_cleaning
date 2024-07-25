@@ -8,7 +8,9 @@ library(sf)
 
 # loading in climate data----
 # Specifying Paths
-google.drive <-  "G:/Shared drives/Urban Ecological Drought"
+# google.drive <-  "G:/Shared drives/Urban Ecological Drought"
+google.drive <-  "~/Google Drive//Shared drives/Urban Ecological Drought"
+
 clim.path <- file.path(google.drive, "data/data_sets/Daily Meteorological Data")
 clim.files <- dir(clim.path)
 clim.files.nc <- clim.files[grep(".nc", clim.files)]
@@ -18,6 +20,7 @@ climateData <- NULL
 pb <- txtProgressBar(min=0, max=length(clim.files.nc), style=3)
 pb.ind=1
 for(i in clim.files.nc){
+  # i=clim.files.nc[1]
   temp <- nc_open(file.path(clim.path, i))
   varNow <- names(temp$var)
   varLabprep <- stringr::str_split_i(i,"_",2)
@@ -36,21 +39,23 @@ for(i in clim.files.nc){
   
   # # If you want ALL the data start here
   # tempData <- ncvar_get(temp, varNow) # dims are lat, lon, time
+  # tempData <- tempData[,,1]
   # dim(tempData)
   
   tempRast <- rast(file.path(clim.path, i))
+  # plot(tempRast$spei_7306) # This show's it's rotated and missing data at the beginnign
   base_crs <- crs(tempRast)
-  tempRast.reproj <- project(tempRast, "EPSG:3857")
+  # tempRast.reproj <- project(tempRast, "EPSG:3857")
   
-  tempDF <- terra::as.data.frame(tempRast,xy=T)
-  tempDF2 <- stack(tempDF[,!names(tempDF) %in% c("x", "y")])
-  names(tempDF2) <- c(varLab, "date")
-  tempDF2$x <- tempDF$x
-  tempDF2$y <-tempDF$y
-  tempDF2$date <- dimDate
-  
-  ggplot(data=tempDF2[tempDF2$date=="2020-06-01",]) +
-    geom_raster(aes(x=x, y=y, fill=spei14day))
+  # tempDF <- terra::as.data.frame(tempRast,xy=T)
+  # tempDF2 <- stack(tempDF[,!names(tempDF) %in% c("x", "y")])
+  # names(tempDF2) <- c(varLab, "date")
+  # tempDF2$x <- tempDF$x
+  # tempDF2$y <-tempDF$y
+  # tempDF2$date <- dimDate
+  # 
+  # ggplot(data=tempDF2[tempDF2$date=="2020-06-01",]) +
+  #   geom_raster(aes(x=x, y=y, fill=spei14day))
   
   # We only have NDVI for 2000-present, so lets just pull a subset; data is in dims of c(lat,lon, time)
   indTimeStart <- which(dimDate=="2000-01-01")
@@ -58,11 +63,12 @@ for(i in clim.files.nc){
   
   tempData <- ncvar_get(temp, varNow, start=c(1,1,indTimeStart), count=c(length(dimLat), length(dimLon), length(dimTime)-indTimeStart+1)) # dims are lat, lon, time
   dim(tempData)
-  dimnames(tempData) <- list(latitude=dimLat, longitude=dimLon, date=dimDateShort)
+  dimnames(tempData) <- list(latitude=rev(dimLat), longitude=dimLon, date=dimDateShort)
   
-  # tempR1 <- rast(tempData, crs=base_crs, extent=ext(test))
-  tempRast <- rast(aperm(tempData, c(2,1,3)), crs=base_crs, extent=ext(test))
- 
+  tempRast <- rast(tempData[dim(tempData)[1]:1,,], crs=base_crs, extent=c(range(dimLon), range(dimLat)))
+  # tempRast <- rast(aperm(tempData, c(1,2,3)), crs=base_crs, extent=c(range(dimLon), range(dimLat)))
+  plot(tempRast$lyr.2)
+  
   temp.reproj <- project(tempRast, "EPSG:3857")
   tempDF <- terra::as.data.frame(temp.reproj, xy=T)
   names(tempDF) <- c("x", "y", paste0(c(dimDateShort)))
@@ -71,6 +77,11 @@ for(i in clim.files.nc){
   names(tempDF.stack) <- c(varLab, "date")
   tempDF.stack$x <- tempDF$x
   tempDF.stack$y <- tempDF$y
+  
+  # summary(tempDF.stack)
+  # ggplot(data=tempDF.stack[tempDF.stack$date=="2000-01-01",]) +
+  #   coord_equal() +
+  #   geom_tile(aes(x=x, y=y, fill=spei14day))
   
   if(is.null(climateData)) climateData <- tempDF.stack else climateData <- merge(climateData, tempDF.stack, by=c("date", "x", "y"), all=T)
   saveRDS(climateData, file="processed_data/climate_spatial.RDS")
