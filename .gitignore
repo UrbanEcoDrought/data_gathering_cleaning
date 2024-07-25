@@ -6,3 +6,4 @@ figures/*
 processed_data/*
 input_data/*
 meow/*
+.DS_Store
