@@ -1,34 +1,22 @@
-# Building Artificial neural network model to predict NDVI from climate and lag across space
-
-library(neuralnet)
+# organizing climate data into a dataframe that we can work with
 library(dplyr)
-library(caret)
 library(terra)
 library(ggplot2)
 library(ncdf4)
 library(lubridate)
-# Specifying Paths----
-google.drive <-  "G:/Shared drives/Urban Ecological Drought"
-
-# loading in NDVI data----
-
-ndvi.dat <- readRDS("processed_data/landsat_NDVI_spatial.RDS") # data also on Drought google drive but loaded Ross's local copy for speed
-head(ndvi.dat)
-
+library(sf)
 
 # loading in climate data----
-clim.dat <- rast("input_data/Sample_Tmax30day.tif")
-clim.dat
-clim.dat2 <- project(clim.dat, "EPSG:3857")
-
+# Specifying Paths
+google.drive <-  "G:/Shared drives/Urban Ecological Drought"
 clim.path <- file.path(google.drive, "data/data_sets/Daily Meteorological Data")
 clim.files <- dir(clim.path)
 clim.files.nc <- clim.files[grep(".nc", clim.files)]
 
-start_date <- ymd("1980-01-01")
-end_date <- ymd("2022-12-31")
-date_vector <- seq(from = start_date, to = end_date, by="day")
+climateData <- NULL
 
+pb <- txtProgressBar(min=0, max=length(clim.files.nc), style=3)
+pb.ind=1
 for(i in clim.files.nc){
   temp <- nc_open(file.path(clim.path, i))
   varNow <- names(temp$var)
@@ -50,6 +38,20 @@ for(i in clim.files.nc){
   # tempData <- ncvar_get(temp, varNow) # dims are lat, lon, time
   # dim(tempData)
   
+  tempRast <- rast(file.path(clim.path, i))
+  base_crs <- crs(tempRast)
+  tempRast.reproj <- project(tempRast, "EPSG:3857")
+  
+  tempDF <- terra::as.data.frame(tempRast,xy=T)
+  tempDF2 <- stack(tempDF[,!names(tempDF) %in% c("x", "y")])
+  names(tempDF2) <- c(varLab, "date")
+  tempDF2$x <- tempDF$x
+  tempDF2$y <-tempDF$y
+  tempDF2$date <- dimDate
+  
+  ggplot(data=tempDF2[tempDF2$date=="2020-06-01",]) +
+    geom_raster(aes(x=x, y=y, fill=spei14day))
+  
   # We only have NDVI for 2000-present, so lets just pull a subset; data is in dims of c(lat,lon, time)
   indTimeStart <- which(dimDate=="2000-01-01")
   dimDateShort <- as_date(seq(from=ymd("2000-01-01"), to=max(dimDate), by="day"))
@@ -58,24 +60,19 @@ for(i in clim.files.nc){
   dim(tempData)
   dimnames(tempData) <- list(latitude=dimLat, longitude=dimLon, date=dimDateShort)
   
-  tempRast <- rast(tempData)
-  tempRastDF <- as.data.frame(tempRast, xy=T)
+  # tempR1 <- rast(tempData, crs=base_crs, extent=ext(test))
+  tempRast <- rast(aperm(tempData, c(2,1,3)), crs=base_crs, extent=ext(test))
+ 
+  temp.reproj <- project(tempRast, "EPSG:3857")
+  tempDF <- terra::as.data.frame(temp.reproj, xy=T)
+  names(tempDF) <- c("x", "y", paste0(c(dimDateShort)))
   
-  temp.reproj <- project(temp, "EPSG:3857")
+  tempDF.stack <- stack(tempDF[,!names(tempDF) %in% c("x", "y")])
+  names(tempDF.stack) <- c(varLab, "date")
+  tempDF.stack$x <- tempDF$x
+  tempDF.stack$y <- tempDF$y
   
+  if(is.null(climateData)) climateData <- tempDF.stack else climateData <- merge(climateData, tempDF.stack, by=c("date", "x", "y"), all=T)
+  saveRDS(climateData, file="processed_data/climate_spatial.RDS")
+  setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
 }
-
-
-clim.df <- as.data.frame(clim.dat2, xy=T)
-head(clim.df)
-names(clim.df) <- c("x", "y", "temp.30day")
-
-ggplot(data = ndvi.dat[ndvi.dat$date %in% "2011-08-07",]) +
-  geom_raster(aes(x=x, y=y, fill=ndvi_value)) +
-  geom_raster(data=clim.df, aes(x=x, y=y, fill=temp.30day),fill="red3")
-
-# merging NDVI and climate data together----
-coord.check <- ndvi.dat[ndvi.dat$x %in% clim.df$x,]
-
-chi.dat <- merge(ndvi.dat, clim.df, by=c("x", "y"))
-summary(chi.dat)
