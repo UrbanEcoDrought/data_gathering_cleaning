@@ -55,6 +55,12 @@ projExample = sampleGT$projection()
 projCRS = projExample$crs()
 projTransform <- unlist(projExample$getInfo()$transform)
 
+sampleExtent <- sampleGT$geometry()
+coordExt <- sampleExtent$coordinates
+coordExt$getInfo()
+sampleGT$geometry()$getInfo()
+
+
 projExample$getInfo()
 projCRS$getInfo()
 projTransform
@@ -73,7 +79,7 @@ get_date <- function(image) {
 # Load MODIS NDVI data; attach month & year
 # https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC09_C02_T1_L2
 # Loading for a specific time range and just doing the mean to test the concept
-landsat9 <- ee$ImageCollection("LANDSAT/LC09/C02/T1_L2")$filterBounds(chiBBox)$filter(ee$Filter$date("2023-01-01", "2023-12-31"))$reduce("mean")$clip(Chicago)
+landsat9 <- ee$ImageCollection("LANDSAT/LC09/C02/T1_L2")$filterBounds(sampleGT$geometry())$filter(ee$Filter$date("2023-01-01", "2023-12-31"))$reduce("mean")$clip(sampleGT$geometry())
 landsat9 <- landsat9$addBands(landsat9$normalizedDifference(c('SR_B5_mean','SR_B4_mean'))$rename('NDVI'))
 ee_print(landsat9)
 Map$addLayer(landsat9$select('NDVI'), ndviVis, "NDVI - First")
@@ -84,7 +90,7 @@ ee_print(l9Agg)
 Map$addLayer(l9Agg$select('NDVI'), ndviVis, "NDVI - First")
 
 # define the reducer
-saveTest <- ee_image_to_drive(image=l9Agg$select("NDVI"), description="landsat9_NDVI", fileNamePrefix="landsat9_NDVI-Agg", folder=GoogleFolderSave, timePrefix = F, region = chiBBox, maxPixels = 10e12, scale=4470.698, crs=projCRS)
+saveTest <- ee_image_to_drive(image=l9Agg$select("NDVI"), description="landsat9_NDVI3", fileNamePrefix="landsat9_NDVI-Agg3", folder=GoogleFolderSave, timePrefix = F, region = sampleGT$geometry(), maxPixels = 10e12, scale=4470.698, crs=projCRS)
 saveTest$start()
 
 
@@ -95,7 +101,8 @@ origGT <- raster("~/Google Drive/Shared drives/Urban Ecological Drought/data/dat
 origGT
 plot(origGT)
 
-newL9 <- raster("~/Google Drive/My Drive/landsat_data-TEST/landsat9_NDVI-Agg.tif")
+# newL9b <- raster("~/Google Drive/My Drive/landsat_data-TEST/")
+newL9 <- raster("~/Google Drive/My Drive/landsat_data-TEST/landsat9_NDVI-Agg3.tif")
 newL9
 plot(newL9)
 
@@ -107,5 +114,5 @@ summary(dfl9Agg)
 
 library(ggplot2)
 ggplot(data=dfOrigGT) +
-  geom_tile(data=dfl9Agg, aes(x=x, y=y, fill=NDVI), alpha=0.3) +
+  geom_tile(data=dfl9Agg, aes(x=x, y=y, fill=NDVI), color="blue", alpha=0.5) +
   geom_tile(aes(x=x, y=y), color="black", fill="black", alpha=0.3)
