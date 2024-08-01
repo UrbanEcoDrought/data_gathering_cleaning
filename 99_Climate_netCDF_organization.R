@@ -25,7 +25,7 @@ for(i in clim.files.nc){
   varNow <- names(temp$var)
   varLabprep <- stringr::str_split_i(i,"_",2)
   varLab <- tolower(stringr::str_split_i(varLabprep, "[.]", 1))
-  
+  nc_crs <- crs(temp)
   # checkign dimension indexing
   # summary(temp$dim)
   dimLat <- ncvar_get(temp, "lat")
@@ -69,21 +69,21 @@ for(i in clim.files.nc){
   # tempRast <- rast(aperm(tempData, c(1,2,3)), crs=base_crs, extent=c(range(dimLon), range(dimLat)))
   # plot(tempRast$lyr.2)
   
-  temp.reproj <- project(tempRast, "EPSG:3857")
-  tempDF <- terra::as.data.frame(temp.reproj, xy=T)
+  
+  tempDF <- terra::as.data.frame(tempRast, xy=T)
   names(tempDF) <- c("x", "y", paste0(c(dimDateShort)))
   
   tempDF.stack <- stack(tempDF[,!names(tempDF) %in% c("x", "y")])
   names(tempDF.stack) <- c(varLab, "date")
   tempDF.stack$x <- tempDF$x
   tempDF.stack$y <- tempDF$y
-  
+  tempDF.stack$crs <- crs(tempRast, parse=T)[1]
   # summary(tempDF.stack)
   # ggplot(data=tempDF.stack[tempDF.stack$date=="2000-01-01",]) +
   #   coord_equal() +
   #   geom_tile(aes(x=x, y=y, fill=spei14day))
   
-  if(is.null(climateData)) climateData <- tempDF.stack else climateData <- merge(climateData, tempDF.stack, by=c("date", "x", "y"), all=T)
+  if(is.null(climateData)) climateData <- tempDF.stack else climateData <- merge(climateData, tempDF.stack, by=c("date", "x", "y", "crs"), all=T)
   saveRDS(climateData, file="processed_data/climate_spatial.RDS")
   setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
 }
@@ -92,3 +92,6 @@ for(i in clim.files.nc){
 
 doubleCheck <- readRDS("processed_data/climate_spatial.RDS")
 head(doubleCheck)
+
+# saving the dataframe to the google drive so others can have it
+saveRDS(file.path(google.drive, "data/r_files/processed_data/chicago_cliamte_spatial_DF.RDS"))
