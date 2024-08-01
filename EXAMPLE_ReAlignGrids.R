@@ -55,6 +55,8 @@ projExample = sampleGT$projection()
 projCRS = projExample$crs()
 projTransform <- unlist(projExample$getInfo()$transform)
 
+sampleGT$projection()$getInfo()
+
 sampleExtent <- sampleGT$geometry()
 coordExt <- sampleExtent$coordinates
 coordExt$getInfo()
@@ -90,7 +92,7 @@ ee_print(l9Agg)
 Map$addLayer(l9Agg$select('NDVI'), ndviVis, "NDVI - First")
 
 # define the reducer
-saveTest <- ee_image_to_drive(image=l9Agg$select("NDVI"), description="landsat9_NDVI3", fileNamePrefix="landsat9_NDVI-Agg3", folder=GoogleFolderSave, timePrefix = F, region = sampleGT$geometry(), maxPixels = 10e12, scale=4470.698, crs=projCRS)
+saveTest <- ee_image_to_drive(image=l9Agg$select("NDVI"), description="landsat9_NDVI4", fileNamePrefix="landsat9_NDVI-Agg4", folder=GoogleFolderSave, timePrefix = F, region = sampleGT$geometry(), maxPixels = 10e12, scale=4470.698, crs=projCRS, crsTransform=projTransform)
 saveTest$start()
 
 
@@ -102,7 +104,7 @@ origGT
 plot(origGT)
 
 # newL9b <- raster("~/Google Drive/My Drive/landsat_data-TEST/")
-newL9 <- raster("~/Google Drive/My Drive/landsat_data-TEST/landsat9_NDVI-Agg3.tif")
+newL9 <- raster("~/Google Drive/My Drive/landsat_data-TEST/landsat9_NDVI-Agg4.tif")
 newL9
 plot(newL9)
 
