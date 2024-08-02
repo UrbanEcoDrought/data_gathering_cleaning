@@ -2,38 +2,40 @@
 library(terra)
 library(sf)
 library(ggplot2)
+library(ggthemes)
+google.path <- "G:/Shared drives/Urban Ecological Drought/data/data_sets/landsat_spatial/"
 
 # Loading in the sample temperature data from trent to see what the resolution and projection are
-temp.dat <- rast("input_data/Sample_Tmax30day.tif")
+temp.dat <- rast("G:/Shared drives/Urban Ecological Drought/data/data_sets/example_met_geotiff/Sample_Tmax30day.tif")
 temp.dat
 
 plot(temp.dat)
 res(temp.dat)
 
-# changing projection to get things into a resolution that is in meters
-temp.dat.reproj <- project(temp.dat, "EPSG:3857")
-temp.dat.reproj
+# # changing projection to get things into a resolution that is in meters
+# temp.dat.reproj <- project(temp.dat, "EPSG:3857")
+# temp.dat.reproj
 
-target_projection <- crs(temp.dat.reproj)
-scale <- 5462.168
+# target_projection <- crs(temp.dat.reproj)
+# scale <- 5462.168
 
 # loading in data from GEE to see how it looks
-l8.test <- rast("input_data/landsat_data/landsat8_NDVI.tif")
-l8.test
+l8.test <- rast(file.path(google.path, "landsat8_NDVI.tif"))
+l8.test # make sure the projection info from landsat and climate data aligns here.
 plot(l8.test)[1]
 
 
 # Landsat Data Stacking----
 
 # setting up a loop to read in landsat data and stack into a single data frame
-file.dir <- dir("input_data/landsat_data/")
+file.dir <- dir(google.path)
 
 landsat.df <- NULL
 
 for(i in unique(file.dir)) {
   
   landsat.name <- stringr::str_split(i, "_")[[1]][1]
-  temp.rast <- rast(paste0("input_data/landsat_data/", i))
+  temp.rast <- rast(file.path(google.path, i))
   
   temp.df <- terra::as.data.frame(temp.rast, xy=T)
   
@@ -49,15 +51,19 @@ for(i in unique(file.dir)) {
 }
 
 head(landsat.df)
+dim(landsat.df)
+range(landsat.df$date)
 unique(landsat.df$landsat)
 
 landsat.df$year <- lubridate::year(landsat.df$date)
 landsat.df$month <- lubridate::month(landsat.df$date)
 landsat.df$doy <- lubridate::yday(landsat.df$date)
 
-ggplot(data=landsat.df[landsat.df$year=="2020" & landsat.df$month=="6",]) + facet_grid(date~landsat) +
+ggplot(data=landsat.df[landsat.df$year=="2020" & landsat.df$month=="6",]) + facet_grid(landsat~date) +
   geom_tile(aes(x=x, y=y, fill=ndvi_value)) +
-  theme_bw()
+  coord_equal()+
+  theme_map()+
+  theme(legend.position = "top")
   
 ggplot(data=landsat.df[landsat.df$landsat=="landsat8",]) +
   geom_point(aes(x=doy, y=ndvi_value, col=landsat), alpha = 0.1) +
@@ -74,8 +80,8 @@ landsat.df$xy.coord <- paste(landsat.df$x, landsat.df$y, sep="[.]")
 
 landsat.df2 <- NULL
 
-pb <- txtProgressBar(min=0, max=length(land), style=3)
-pb.ind=1
+# pb <- txtProgressBar(min=0, max=length(unique(landsat.df$landsat)), style=3)
+# pb.ind=1
 
 for(s in unique(landsat.df$landsat)){
   print(s)
