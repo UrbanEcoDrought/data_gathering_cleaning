@@ -19,13 +19,14 @@ climateData <- NULL
 
 pb <- txtProgressBar(min=0, max=length(clim.files.nc), style=3)
 pb.ind=1
+climateData <- NULL
 for(i in clim.files.nc){
   # i=clim.files.nc[1]
   temp <- nc_open(file.path(clim.path, i))
   varNow <- names(temp$var)
   varLabprep <- stringr::str_split_i(i,"_",2)
   varLab <- tolower(stringr::str_split_i(varLabprep, "[.]", 1))
-  nc_crs <- crs(temp)
+  
   # checkign dimension indexing
   # summary(temp$dim)
   dimLat <- ncvar_get(temp, "lat")
@@ -43,6 +44,7 @@ for(i in clim.files.nc){
   # dim(tempData)
   
   tempRast <- rast(file.path(clim.path, i))
+  
   # plot(tempRast$spei_7306) # This show's it's rotated and missing data at the beginnign
   base_crs <- crs(tempRast)
   # tempRast.reproj <- project(tempRast, "EPSG:3857")

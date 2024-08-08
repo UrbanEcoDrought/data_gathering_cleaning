@@ -7,6 +7,13 @@ library(terra)
 library(ggplot2)
 library(ncdf4)
 library(lubridate)
+
+
+library(keras)
+library(mlbench)
+library(dplyr)
+library(magrittr)
+library(neuralnet)
 # Specifying Paths----
 google.drive <-  "G:/Shared drives/Urban Ecological Drought"
 
@@ -14,68 +21,49 @@ google.drive <-  "G:/Shared drives/Urban Ecological Drought"
 
 ndvi.dat <- readRDS("processed_data/landsat_NDVI_spatial.RDS") # data also on Drought google drive but loaded Ross's local copy for speed
 head(ndvi.dat)
+summary(ndvi.dat)
 
+ndvi.dat.clean <- ndvi.dat[!is.na(ndvi.dat$ndvi_value),]
+summary(ndvi.dat.clean)
 
 # loading in climate data----
-clim.dat <- rast("input_data/Sample_Tmax30day.tif")
-clim.dat
-clim.dat2 <- project(clim.dat, "EPSG:3857")
+clim.dat <- readRDS("processed_data/climate_spatial.RDS") # climate and landsat data should be in the same projection
+head(clim.dat)
 
-clim.path <- file.path(google.drive, "data/data_sets/Daily Meteorological Data")
-clim.files <- dir(clim.path)
-clim.files.nc <- clim.files[grep(".nc", clim.files)]
-
-start_date <- ymd("1980-01-01")
-end_date <- ymd("2022-12-31")
-date_vector <- seq(from = start_date, to = end_date, by="day")
-
-for(i in clim.files.nc){
-  temp <- nc_open(file.path(clim.path, i))
-  varNow <- names(temp$var)
-  varLabprep <- stringr::str_split_i(i,"_",2)
-  varLab <- tolower(stringr::str_split_i(varLabprep, "[.]", 1))
-  
-  # checkign dimension indexing
-  # summary(temp$dim)
-  dimLat <- ncvar_get(temp, "lat")
-  dimLon <- ncvar_get(temp, "lon")
-  
-  # temp$dim$time$units # we don't have unit information; PROBABLY days since 1900
-  dimTime <- ncvar_get(temp, "time")
-  # dimDate <- lubridate::ymd("0000-01-01") + c(dimTime)-1 # There's a way to say that dimTime are days, but I forget
-  dimDate <- as_date(dimTime, origin = "0000-01-01")-1 # subtracting 1 to be sure that we are starting on Jan1
-  head(dimDate)
-  
-  # # If you want ALL the data start here
-  # tempData <- ncvar_get(temp, varNow) # dims are lat, lon, time
-  # dim(tempData)
-  
-  # We only have NDVI for 2000-present, so lets just pull a subset; data is in dims of c(lat,lon, time)
-  indTimeStart <- which(dimDate=="2000-01-01")
-  dimDateShort <- as_date(seq(from=ymd("2000-01-01"), to=max(dimDate), by="day"))
-  
-  tempData <- ncvar_get(temp, varNow, start=c(1,1,indTimeStart), count=c(length(dimLat), length(dimLon), length(dimTime)-indTimeStart+1)) # dims are lat, lon, time
-  dim(tempData)
-  dimnames(tempData) <- list(latitude=dimLat, longitude=dimLon, date=dimDateShort)
-  
-  tempRast <- rast(tempData)
-  tempRastDF <- as.data.frame(tempRast, xy=T)
-  
-  temp.reproj <- project(temp, "EPSG:3857")
-  
-}
+# removing the 90day variables as they ahve too many missing values
+clim.dat2 <- clim.dat[,!names(clim.dat) %in% names(clim.dat)[grep("90", names(clim.dat))]]
+summary(clim.dat2)
 
 
-clim.df <- as.data.frame(clim.dat2, xy=T)
-head(clim.df)
-names(clim.df) <- c("x", "y", "temp.30day")
 
-ggplot(data = ndvi.dat[ndvi.dat$date %in% "2011-08-07",]) +
-  geom_raster(aes(x=x, y=y, fill=ndvi_value)) +
-  geom_raster(data=clim.df, aes(x=x, y=y, fill=temp.30day),fill="red3")
+# merging the datasets in together
+dim(ndvi.dat.clean)
+dim(clim.dat2)
 
-# merging NDVI and climate data together----
-coord.check <- ndvi.dat[ndvi.dat$x %in% clim.df$x,]
-
-chi.dat <- merge(ndvi.dat, clim.df, by=c("x", "y"))
+chi.dat <- merge(ndvi.dat.clean, clim.dat2, by=c("date", "x", "y"))
+dim(chi.dat)
 summary(chi.dat)
+
+# parsing down data to a clean set with no missing values
+chi.dat2 <- chi.dat[!is.na(chi.dat$spei14day), !names(chi.dat) %in% "ndvi.lag14d"]
+summary(chi.dat2)
+
+dim(chi.dat2)
+
+# have satellite as a factor which the ann will not like, so making it a numeric for now
+class(chi.dat2$landsat)
+# chi.dat2$landsat <- as.factor(chi.dat2$landsat)
+chi.dat2$landsat.num <- as.numeric(stringr::str_sub(as.character(chi.dat2$landsat),-1,-1))
+
+# splitting into training and validation data sets
+set.seed(08082024)
+train.index <- createDataPartition(chi.dat2$ndvi_value, p=0.8, list=F)
+
+train.dat <- chi.dat2[train.index,]
+test.dat <- chi.dat2[-train.index,]
+
+# setting the formula for the NN
+names(chi.dat2)
+formula <- ndvi_value ~ doy + x + y + landsat.num + spi14day + spi30day + spi60day + tmax14 + tmax30 + tmax60 + tmin14 + tmin30 + tmin60
+  
+neural_net <- neuralnet(formula, data = train.dat, hidden = c(5,3), linear.output = T)
