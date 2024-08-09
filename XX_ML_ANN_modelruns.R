@@ -55,15 +55,19 @@ class(chi.dat2$landsat)
 # chi.dat2$landsat <- as.factor(chi.dat2$landsat)
 chi.dat2$landsat.num <- as.numeric(stringr::str_sub(as.character(chi.dat2$landsat),-1,-1))
 
+# limiting to march-oct
+chi.dat3 <- chi.dat2[!chi.dat2$month %in% c(1,2,11,12),]
+
 # splitting into training and validation data sets
 set.seed(08082024)
-train.index <- createDataPartition(chi.dat2$ndvi_value, p=0.8, list=F)
+train.index <- createDataPartition(chi.dat3$ndvi_value, p=0.8, list=F)
 
 train.dat <- chi.dat2[train.index,]
 test.dat <- chi.dat2[-train.index,]
 
 # setting the formula for the NN
-names(chi.dat2)
-formula <- ndvi_value ~ doy + x + y + landsat.num + spi14day + spi30day + spi60day + tmax14 + tmax30 + tmax60 + tmin14 + tmin30 + tmin60
-  
+names(chi.dat3)
+# formula <- ndvi_value ~ doy + x + y + landsat.num + spi14day + spi30day + spi60day + tmax14 + tmax30 + tmax60 + tmin14 + tmin30 + tmin60
+
+formula <- ndvi_value ~ doy + x + y + landsat.num + tmin14
 neural_net <- neuralnet(formula, data = train.dat, hidden = c(5,3), linear.output = T)
