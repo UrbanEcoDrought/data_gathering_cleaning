@@ -108,11 +108,12 @@ for(s in unique(landsat.df$landsat)){
    sat.temp2 <- merge(sat.temp, coord.temp, all.x=T)
    setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
   }
-  if(is.null(landsat.df2)) landsat.df2 <- sat.temp2 else lansat.df2 <- rbind(landsat.df2, sat.temp2)
+  if(is.null(landsat.df2)) landsat.df2 <- sat.temp2 else landsat.df2 <- rbind(landsat.df2, sat.temp2)
 }
 
-
-
+summary(landsat.df2)
+summary(as.factor(landsat.df2$landsat))
+dim(landsat.df2)
 
 # data are spotty. May want to take a couple of week average.
 saveRDS(landsat.df2, file = "G:/Shared drives/Urban Ecological Drought/data/r_files/processed_files/landsat_NDVI_spatial.RDS")

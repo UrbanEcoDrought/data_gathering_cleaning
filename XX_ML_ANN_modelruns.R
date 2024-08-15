@@ -19,7 +19,7 @@ google.drive <-  "G:/Shared drives/Urban Ecological Drought"
 
 # loading in NDVI data----
 
-ndvi.dat <- readRDS("processed_data/landsat_NDVI_spatial.RDS") # data also on Drought google drive but loaded Ross's local copy for speed
+ndvi.dat <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_NDVI_spatial.RDS")) # data also on Drought google drive but loaded Ross's local copy for speed
 head(ndvi.dat)
 summary(ndvi.dat)
 
