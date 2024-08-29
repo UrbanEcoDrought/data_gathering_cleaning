@@ -19,7 +19,7 @@ google.drive <-  "G:/Shared drives/Urban Ecological Drought"
 
 # loading in NDVI data----
 
-ndvi.dat <- readRDS(file.path(google.drive, "data/r_files/processed_files/landsat_NDVI_spatial.RDS")) # data also on Drought google drive but loaded Ross's local copy for speed
+ndvi.dat <- readRDS("processed_data/landsat_NDVI_spatial.RDS") # data also on Drought google drive but loaded Ross's local copy for speed
 head(ndvi.dat)
 summary(ndvi.dat)
 
@@ -45,7 +45,9 @@ dim(chi.dat)
 summary(chi.dat)
 
 # parsing down data to a clean set with no missing values
-chi.dat2 <- chi.dat[!is.na(chi.dat$spei14day), !names(chi.dat) %in% "ndvi.lag14d"]
+# chi.dat2 <- chi.dat[!is.na(chi.dat$tmin14), !names(chi.dat) %in% "ndvi.lag14d"]
+chi.dat1.5 <- chi.dat[,!names(chi.dat) %in% "ndvi.lag14d"]
+chi.dat2 <- chi.dat1.5[complete.cases(chi.dat1.5),]
 summary(chi.dat2)
 
 dim(chi.dat2)
@@ -61,9 +63,10 @@ chi.dat3 <- chi.dat2[!chi.dat2$month %in% c(1,2,11,12),]
 # splitting into training and validation data sets
 set.seed(08082024)
 train.index <- createDataPartition(chi.dat3$ndvi_value, p=0.8, list=F)
+#train.index <- sample(1:nrow(chi.dat3), size=(nrow(chi.dat3)*0.8), replace=F)
 
-train.dat <- chi.dat2[train.index,]
-test.dat <- chi.dat2[-train.index,]
+train.dat <- chi.dat3[train.index[,1],]
+test.dat <- chi.dat3[-train.index[,1],]
 
 # setting the formula for the NN
 names(chi.dat3)
