@@ -95,14 +95,14 @@ for(s in unique(landsat.df$landsat)){
     coord.temp <- sat.temp[sat.temp$xy.coord==xy,]
     coord.temp <- coord.temp[order(coord.temp$date, decreasing = F),]
     
-    coord.temp$ndvi.lag14d <- NA
+    coord.temp$ndvi.lag21d <- NA
     for(d in 1:nrow(coord.temp)){
       
-      rowLag <- which(coord.temp$date>=(coord.temp$date[d]-14) & coord.temp$date<coord.temp$date[d])
+      rowLag <- which(coord.temp$date>=(coord.temp$date[d]-21) & coord.temp$date<coord.temp$date[d])
       
       if(length(rowLag)<1) next
-      if(length(rowLag)==1) coord.temp$ndvi.lag14d[d] <- coord.temp$ndvi_value[rowLag]
-      if(length(rowLag)>1) coord.temp$ndvi.lag14d[d] <- mean(coord.temp$ndvi_value[rowLag], na.rm=T)
+      if(length(rowLag)==1) coord.temp$ndvi.lag21d[d] <- coord.temp$ndvi_value[rowLag]
+      if(length(rowLag)>1) coord.temp$ndvi.lag21d[d] <- mean(coord.temp$ndvi_value[rowLag], na.rm=T)
       
     }
    sat.temp2 <- merge(sat.temp, coord.temp, all.x=T)

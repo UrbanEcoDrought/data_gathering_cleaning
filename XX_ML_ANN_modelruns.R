@@ -59,6 +59,10 @@ chi.dat2$landsat.num <- as.numeric(stringr::str_sub(as.character(chi.dat2$landsa
 
 # limiting to march-oct
 chi.dat3 <- chi.dat2[!chi.dat2$month %in% c(1,2,11,12),]
+head(chi.dat3)
+# adding in a week variable to see if that helps with model stablility
+chi.dat3$week.num <- lubridate::week(chi.dat3$date)
+
 
 # splitting into training and validation data sets
 set.seed(08082024)
@@ -72,5 +76,5 @@ test.dat <- chi.dat3[-train.index[,1],]
 names(chi.dat3)
 # formula <- ndvi_value ~ doy + x + y + landsat.num + spi14day + spi30day + spi60day + tmax14 + tmax30 + tmax60 + tmin14 + tmin30 + tmin60
 
-formula <- ndvi_value ~ doy + x + y + landsat.num + tmin14
+formula <- ndvi_value ~ week.num + x + y
 neural_net <- neuralnet(formula, data = train.dat, hidden = c(5,3), linear.output = T)
