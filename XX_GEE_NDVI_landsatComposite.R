@@ -91,6 +91,7 @@ for(s in unique(landsat.df$landsat)){
   
   pb <- txtProgressBar(min=0, max=length(unique(sat.temp$xy.coord)), style=3)
   pb.ind=1
+  sat.coord.lag <- NULL
   for(xy in unique(sat.temp$xy.coord)){
     coord.temp <- sat.temp[sat.temp$xy.coord==xy,]
     coord.temp <- coord.temp[order(coord.temp$date, decreasing = F),]
@@ -105,10 +106,10 @@ for(s in unique(landsat.df$landsat)){
       if(length(rowLag)>1) coord.temp$ndvi.lag21d[d] <- mean(coord.temp$ndvi_value[rowLag], na.rm=T)
       
     }
-   sat.temp2 <- merge(sat.temp, coord.temp, all.x=T)
+    if(is.null(sat.coord.lag)) sat.coord.lag <- coord.temp else sat.coord.lag <- rbind(sat.coord.lag, coord.temp)
    setTxtProgressBar(pb, pb.ind); pb.ind=pb.ind+1
   }
-  if(is.null(landsat.df2)) landsat.df2 <- sat.temp2 else landsat.df2 <- rbind(landsat.df2, sat.temp2)
+  if(is.null(landsat.df2)) landsat.df2 <- sat.coord.lag else landsat.df2 <- rbind(landsat.df2, sat.coord.lag)
 }
 
 summary(landsat.df2)
