@@ -23,7 +23,7 @@ res(temp.dat)
 l8.test <- rast(file.path(google.path, "landsat8_NDVI.tif"))
 l8.test # make sure the projection info from landsat and climate data aligns here.
 plot(l8.test)[1]
-
+res(l8.test)
 
 # Landsat Data Stacking----
 
