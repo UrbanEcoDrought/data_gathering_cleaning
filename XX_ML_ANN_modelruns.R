@@ -90,6 +90,13 @@ neural_net <- neuralnet(formula, data = train.dat, hidden = c(5,3), linear.outpu
 #------------------------------
 # Cast Predictive Model----
 # need to set the model up with rasters for the predictors
+set.seed(09112024)
+train.index <- createDataPartition(chi.dat$ndvi_value, p=0.8, list=F)
+#train.index <- sample(1:nrow(chi.dat3), size=(nrow(chi.dat3)*0.8), replace=F)
+
+train.dat <- chi.dat3[train.index[,1],]
+test.dat <- chi.dat3[-train.index[,1],]
+
 
 summary(chi.dat3)
 
@@ -107,7 +114,6 @@ model <- train(formula,
                data = chi.dat, 
                method = "ranger",  # Random Forest algorithm
                trControl = train_control,
-               ntrees=100,
                na.action="na.omit")
 
 # Print the results
