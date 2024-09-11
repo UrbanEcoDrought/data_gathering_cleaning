@@ -45,6 +45,8 @@ chi.dat <- merge(ndvi.dat.clean, clim.dat2, by=c("date", "x", "y"))
 dim(chi.dat)
 summary(chi.dat)
 
+chi.dat$week.num <- lubridate::week(chi.dat$date)
+
 # parsing down data to a clean set with no missing values
 # chi.dat2 <- chi.dat[!is.na(chi.dat$tmin14), !names(chi.dat) %in% "ndvi.lag21d"]
 chi.dat2 <- chi.dat[complete.cases(chi.dat),]
@@ -66,7 +68,7 @@ chi.dat2$landsat.num <- as.numeric(stringr::str_sub(as.character(chi.dat2$landsa
 chi.dat3 <- chi.dat2[!chi.dat2$month %in% c(1,2,11,12),]
 head(chi.dat3)
 # adding in a week variable to see if that helps with model stablility
-chi.dat3$week.num <- lubridate::week(chi.dat3$date)
+
 
 # ANN Model----
 # splitting into training and validation data sets
