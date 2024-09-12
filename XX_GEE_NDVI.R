@@ -43,7 +43,7 @@ origGT <- raster("G:/Shared drives/Urban Ecological Drought/data/data_sets/examp
 origGT
 plot(origGT)
 
-sampleGT <- ee$Image(file.path(assetHome))
+sampleGT <- ee$Image("projects/nbs2023-malexander/assets/Sample_Tmax30day") # hardcodign this for now, because the filepath changed for some reason
 ee_print(sampleGT)
 Map$addLayer(sampleGT)
 
