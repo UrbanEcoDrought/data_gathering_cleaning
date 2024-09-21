@@ -341,13 +341,23 @@ saveUrbMMask$start()
 
 
 # # High Intenstity Urban: 24 ----
+########
+# binary Mask attempt
+#######
 classUrbH = collAnn$map(function(image) {
-  d = ee$Date(ee$Number(image$get('system:time_start')))
+  d = ee$Date(ee$Number(image$get('system:time_start')));
   lcMask = image$select('landcover')$eq(24);
-  binaryMask = lcMask$rename('urban_high_present')$selfMask()$unmask(0);
-  return(binaryMask$set('class', "Urban-High")$set('year', d$get('year')));
-  # return(image$updateMask(lcMask)$set('class', 'Urban-Low')$set('year', d$get('year')));
+  binaryMask = lcMask$rename('urban_high_present')$selfMask()#$unmask(0);
+  # return(binaryMask$set('class', "Urban-High")$set('year', d$get('year')));
+  return(image$updateMask(binaryMask)$set('class', 'Urban-Low')$set('year', d$get('year')));
 });
+# 
+# # # High Intenstity Urban: 24 ----
+# classUrbH = collAnn$map(function(image) {
+#   d = ee$Date(ee$Number(image$get('system:time_start')))
+#   lcMask = image$select('landcover')$eq(24);
+#   return(image$updateMask(lcMask)$set('class', 'Urban-High')$set('year', d$get('year')));
+# });
 
 urbHMask <- ee$ImageCollection$toBands(classUrbH)$rename(yrString)
 ee_print(urbHMask)
@@ -360,9 +370,21 @@ saveUrbHMask$start()
 # wanting to take each mask and count the number of pixels of a particular landcover type in the upscaled pixel of the climate data.
 
 ######################
+percUrbH <- urbHMask$reduceResolution(
+  reducer = ee$Reducer$mean(),
+  maxPixels=16534
+)
+
+urbHPerc <- percUrbH$reproject(
+  crs=projExample
+)
+
+saveUrbHperc <- ee_image_to_drive(image=urbHPerc, description="urbHigh_perc", fileNamePrefix="urbHigh_perc", folder=GoogleFolderSave, timePrefix = F, region = chiBBox, maxPixels = 10e9, crs=projCRS, crsTransform=projTransform)
+saveUrbHperc$start()
+##############
 ee_print(lcChiAnn)
 
-urbHMask_agg <- urbHMask$reproject(projExample)$reduceResolution(reducer=ee$Reducer$mean())$reproject(projExample)
+urbHMask_agg <- urbHMask$reproject(projExample)$reduceResolution(reducer=ee$Reducer$mean(), bestEffort=T)$reproject(projExample)
 
 ee_print(urbHMask_agg)
 
@@ -371,5 +393,16 @@ Map$addLayer(urbHMask_agg$select("YR2001"), nlcdvis, 'NLCDurbH 2001')
 saveUrbH_agg <- ee_image_to_drive(image=urbHMask_agg, description="urbHigh_agg", fileNamePrefix="urbHigh_agg", folder=GoogleFolderSave, timePrefix = F, region = chiBBox, maxPixels = 10e12, crs=projCRS, crsTransform=projTransform)
 saveUrbH_agg$start()
 
+savebaseUrb <- ee_image_to_drive(urbHMask, description="Save_lcMask-Urban-High_2000-2024", fileNamePrefix="urbHigh_base", folder=GoogleFolderSave, timePrefix=F, maxPixels = 10e12, region = chiBBox, crs=proNLCDjCRS, crsTransform = projNLCDTransform)
+savebaseUrb$start()  
+
+
+  
+base.dat <- rast("G:/My Drive/nldc_agg/urbHigh_base.tif")
+plot(base.dat)  
+
 temp.dat <- rast("G:/My Drive/nldc_agg/urbHigh_agg.tif")
 plot(temp.dat)
+
+perc.dat <- rast("G:/My Drive/nldc_agg/urbHigh_perc.tif")
+plot(perc.dat)
