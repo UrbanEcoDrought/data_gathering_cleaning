@@ -157,6 +157,15 @@ gridmet_tmintmax <- ee$ImageCollection("IDAHO_EPSCOR/GRIDMET")$filterBounds(Chic
   m= d$get('month');
   y= d$get('year');
   return(img$set('date',d, 'day',dy, 'month',m, 'year',y))})
+ee_print(gridmet_tmintmax)
+
+maximumTemperatureVis <- list( 
+  min= 250.0,
+  max= 280.0,
+  palette =c ('#d8d8d8', '#4addff', '#5affa3', '#f2ff89', '#ff725c')
+);
+
+Map$addLayer(gridmet_tmintmax$first()$select("tmmx"), maximumTemperatureVis )
 
 tmintmaxMosaic = mosaicByDate(gridmet_tmintmax, 7)$select(c('tmmn_median','tmmx_median'),c('tmmn','tmmx'))$sort("date")
 for(LCTYPE in lcnames){
