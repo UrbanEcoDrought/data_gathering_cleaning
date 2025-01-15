@@ -160,8 +160,8 @@ gridmet_tmintmax <- ee$ImageCollection("IDAHO_EPSCOR/GRIDMET")$filterBounds(Chic
 ee_print(gridmet_tmintmax)
 
 maximumTemperatureVis <- list( 
-  min= 250.0,
-  max= 280.0,
+  min= 260.0,
+  max= 275.0,
   palette =c ('#d8d8d8', '#4addff', '#5affa3', '#f2ff89', '#ff725c')
 );
 
