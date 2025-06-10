@@ -11,8 +11,9 @@
 # 6. Save a file for each Landsat product (e.g. Landsat 7, Landsat 8) with the time series for each landcover class -- 1 value per landcover class per date
 
 library(rgee); library(raster); library(terra)
-ee_check() # For some reason, it's important to run this before initializing right now
-rgee::ee_Initialize(user = 'crollinson@mortonarb.org', drive=T)
+# ee_check() # For some reason, it's important to run this before initializing right now
+user.ee <- "crollinson@mortonarb.org"
+rgee::ee_Initialize(user =user.ee, drive=T, project = "urbanecodrought")
 path.google.CR <- "~/Google Drive/My Drive/UrbanEcoDrought/"
 path.google.share <- "~/Google Drive/Shared drives/Urban Ecological Drought/"
 NDVIsave <- "UrbanEcoDrought_NDVI_LocalExtract"
@@ -53,24 +54,29 @@ chiBounds <- Chicago$geometry()$bounds()
 chiBBox <- ee$Geometry$BBox(-88.70738, 41.20155, -87.52453, 42.49575)
 
 # Landcover names and mask ----
-lcnames <- c("forest", "crop", "grassland", "urban-high", "urban-medium", "urban-low", "urban-open")
+# lcnames <- c("forest", "crop", "grassland", "urban-high", "urban-medium", "urban-low", "urban-open")
+lcnames <- "forest-wet"
 
-forMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Forest')
+forMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Forest')
 # ee_print(forMask)
 # Map$addLayer(forMask$select("YR2023"))
 
-grassMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Grass')
+forWetMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Forest-with-Wet')
+# ee_print(forMask)
+# Map$addLayer(forMask$select("YR2023"))
+
+grassMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Grass')
 # Map$addLayer(grassMask$select("YR2023"))
 
-cropMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Crop')
+cropMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Crop')
 
-urbOMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Urban-Open')
+urbOMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Urban-Open')
 
-urbLMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Urban-Low')
+urbLMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Urban-Low')
 
-urbMMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Urban-Medium')
+urbMMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Urban-Medium')
 
-urbHMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2024_Urban-High')
+urbHMask <- ee$Image('users/crollinson/NLCD-Chicago_2000-2025_Urban-High')
 
 # Map$addLayer(urbLMask$select("YR2023"))
 # Map$addLayer(forMask$select("YR2023"))
